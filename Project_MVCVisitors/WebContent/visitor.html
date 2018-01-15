@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MVC-Ajax Retrospect</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+	$(function() {
+		
+		/* 실행 시 최신 글 리스트 10개 출력 */
+		listAll();
+		
+		/* 스크롤 시 리스트 10개씩 추가 */
+		$(window).scroll(function() {
+			var scrollSize = $(window).scrollTop() + $(window).height();
+			var documentSize = $(document).height();
+			
+			if (scrollSize >= documentSize - 5) {
+				listAll();
+			}
+		});
+		
+		/* 글쓰기 */
+		$("#submit").click(function() {
+				$.ajax({
+					url:'/write.gb',
+					dataType: 'json',
+					data: {name: $('#writer').val(), content: $('#content').val()},
+					success: function(data) {
+						if (data.message.trim() == "failed") {
+							alert("글쓰기 실패");
+						} else {
+							addArticle(data);
+							$('#writer').val("");
+							$('#content').val("");
+						}
+					}
+				});	
+		});
+		
+	});
+	
+	/* 리스트 출력 */
+	function listAll() {
+		$.ajax({
+			url: '/list.gb',
+			dataType: "json",
+			data: {lastId: $(".count").last().attr("id")},
+			success: function(data) {
+				addArticles(data);
+			},
+			error: function(error, a, b) {
+				alert(typeof error)
+				console.log(error);
+				console.log(a);
+				console.log(b);
+				//alert("실패" + error);
+			}
+		});
+	};
+	
+	/* 작성한 글 화면에 추가 */
+	function addArticle(data) {
+		var article = "";
+		article += '<div id="' + data.id + '" class="panel panel-default count">';
+		article += '<div class="panel-heading">';
+		article += '<a href="javascript:erase(' + data.id +');" class="close">&times;</a>';
+		article += '<span class="label label-warning">' + data.name + '</span> <span class="label label-default">' + data.regdate + '</span>';
+		article += '</div>';
+		article += '<div class="panel-body">' + data.content +  '</div>';
+		article += '</div>';
+		
+		$('#articles').prepend(article);
+		countAll(data);
+	}
+	
+	/* 리스트 화면에 출력 */
+	function addArticles(data) {
+		 var articles = "";
+		 $.each(data.list, function(index, article) {
+			articles += '<div id="' + article.id + '" class="panel panel-default count">';
+			articles += '<div class="panel-heading">';
+			articles += '<a href="javascript:erase(' + article.id +');" class="close">&times;</a>';
+			articles += '<span class="label label-warning">' + article.name + '</span> <span class="label label-default">' + article.regdate + '</span>';
+			articles += '</div>';
+			articles += '<div class="panel-body">' + article.content +  '</div>';
+			articles += '</div>';
+		 })
+		 $('#articles').append(articles);
+		 countAll(data);
+		 
+	}
+	
+	/* 전체 글 수 출력 */
+	function countAll(data) {
+		var count = data.count;
+		 $(".badge").html(count);
+	}
+	
+	/* 글 삭제 */
+	function erase(idinfo) {
+		$.ajax({
+			url: '/delete.gb',
+			data: {id: idinfo},
+			dataType: "json",
+			success: function(data) {
+				if (data != "failed") {
+					var id = "#" + data.id;
+					$(id).remove();
+					countAll(data);
+					if ($(".badge").text() < 10) {
+						listAll();	
+					}
+				} else {
+					alert("삭제 실패");
+				}
+			}
+		});
+	};
+	
+	
+</script>
+
+</head>
+<body>
+  <div class="container">
+    <h2>무한 스크롤 방명록 <span class="badge"></span></h2>
+    <h4 class="text-primary">Model2(MVC 디자인패턴) 기반 서버 구현 및 웹 클라이언트 JavaScript Ajax 비동기 요청 및 JSON 처리</h4>
+    
+    <hr>
+
+    <form class="form-horizontal">
+      <div class="form-group">
+        <div class="col-sm-10">
+          <input id="writer" type="text" class="form-control" name="writer" placeholder="작성자" required="required">
+        </div>
+        <div class="col-sm-2">
+          <button id="submit" type="button" class="form-control btn btn-primary">글쓰기</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="col-sm-12">
+          <textarea id="content" class="form-control" name="comment" placeholder="남기고 싶은 말" required="required"></textarea>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <br>
+
+  <div id="articles" class="container">
+  <!-- <div id="articles" class="container" style="min-height: 1000px;"> -->
+  </div>
+
+</body>
+</html>

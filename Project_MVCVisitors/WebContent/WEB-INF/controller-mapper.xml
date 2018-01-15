@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans>
+
+	<bean name="/write" class="com.mvcvisitors.article.controller.ArticleWriteController" />
+	<bean name="/delete" class="com.mvcvisitors.article.controller.ArticleDeleteController"/>
+	<bean name="/list" class="com.mvcvisitors.article.controller.ArticleListController"/>
+
+</beans>
